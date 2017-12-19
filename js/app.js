@@ -12,13 +12,11 @@ var my_news = [
     text: 'Text_3'
   }
 ];
-my_news = [];
 
 var Article = React.createClass({
   render: function() {
     var author = this.props.data.author,
         text = this.props.data.text;
-
     return (
       <div className = "article">
         <p className = "news_author">{author}:</p>
@@ -29,6 +27,10 @@ var Article = React.createClass({
 });
 
 var News = React.createClass({
+  propTypes: {
+      data: React.PropTypes.array.isRequired
+  },
+
   render: function() {
     var data = this.props.data;
     var newsTemplate;
