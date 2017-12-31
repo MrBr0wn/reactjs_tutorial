@@ -1,3 +1,5 @@
+window.ee = new EventEmitter();
+
 var my_news = [
   {
     author: 'Name_1',
@@ -95,44 +97,127 @@ var News = React.createClass({
   }
 });
 
-var TestInput = React.createClass({
+var Add = React.createClass({
+
   getInitialState: function() {
-    return {
-      myValue: ""
+    return{
+      agreeNotChecked: true,
+      authorIsEmpty: true,
+      textIsEmpty: true
     };
   },
 
-  onChangeHandler: function(e) {
-    this.setState({myValue: e.target.value})
+  componentDidMount: function() {
+    ReactDOM.findDOMNode(this.refs.author).focus();
+    console.log("author in focus");
   },
 
-  onBtnClickHandler: function() {
-    console.log(this.refs);
-    alert(ReactDOM.findDOMNode(this.refs.myTestInput).value);
+  onCheckRuleClick: function(e) {
+    this.setState({ agreeNotChecked: !this.state.agreeNotChecked });
+    console.log("checkbox is checked");
+  },
+
+  onBtnClickHandler: function(e) {
+    e.preventDefault();
+    var textEl = ReactDOM.findDOMNode(this.refs.text);
+
+    var author = ReactDOM.findDOMNode(this.refs.author).value;
+    var text = textEl.value;
+    var statusCheckBox = ReactDOM.findDOMNode(this.refs.checkrule).value;
+    console.log(author + " - " + text + "\n" + statusCheckBox);
+    
+    var item = [{
+      author: author,
+      text: text,
+      bigText: "..."
+    }];
+
+    window.ee.emit("News.add", item);
+
+    textEl.value = "";
+    this.setState({textIsEmpty: true});
+
+  },
+
+  onFieldChange: function(fieldName, e) {
+    if(e.target.value.trim().length > 0) {
+      this.setState({["" + fieldName]: false})
+    }
+    else {
+      this.setState({["" + fieldName]: true})
+    }
   },
 
   render: function() {
+    var agreeNotChecked = this.state.agreeNotChecked;
+    var authorIsEmpty = this.state.authorIsEmpty;
+    var textIsEmpty = this.state.textIsEmpty;
     return(
-      <div className = "input-and-btn">
-        <input 
-          className = "test-input"
-          defaultValue = ""
-          ref = "myTestInput"
-          placeholder = "Input value"
-        />
-        <button onClick = {this.onBtnClickHandler} ref = "alert_button">show alert</button>
-      </div>
+      <form className = "add cf">
+        <p className = "name_author">
+          Author name: 
+          <input 
+            type = "text"
+            className = "add_author"
+            onChange = {this.onFieldChange.bind(this, "authorIsEmpty")}
+            ref = "author"
+            placeholder = "Your name"
+          />
+        </p>
+        <p className = "add_news_text">New text:
+          <textarea placeholder = "Input your text"
+            onChange = {this.onFieldChange.bind(this, "textIsEmpty")}
+            ref = "text">
+          </textarea>
+        </p>
+        <label className = "add_checkrule">
+          <p className = "accept-policy">
+            I'm accept policy
+            <input type = "checkbox"
+              defaultChecked = {false}
+              ref = "checkrule"
+              onChange = {this.onCheckRuleClick}
+            />
+          </p>
+        </label>
+        <button className = "add_btn"
+          onClick = {this.onBtnClickHandler}
+          ref = "alert_button"
+          disabled = {agreeNotChecked || authorIsEmpty || textIsEmpty}>
+            Add article
+        </button>
+      </form>
     );
   }
 });
 
 var App = React.createClass({
+
+  getInitialState: function() {
+    return {
+      news: my_news
+    };
+  },
+
+  componentDidMount: function() {
+    var self = this;
+    window.ee.addListener("News.add", function(item) {
+      var nextNews = item.concat(self.state.news);
+      self.setState({news: nextNews});
+    });
+  },
+
+  componentWillUnmount: function() {
+    window.ee.removeListener("News.add");
+  },
+
   render: function() {
+    console.log("render");
     return (
       <div className = "app">
+        <Add />
         <h3>NEWS</h3>
-        <TestInput />
-        <News data={my_news} />
+        <News data={this.state.news} />
       </div>
     );
   }
